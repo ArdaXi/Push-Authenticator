@@ -11,6 +11,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.params.HttpParams;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.ardaxi.authenticator.OCRA;
 
@@ -109,8 +111,91 @@ public class PushAuthenticatorActivity extends ListActivity {
 		int accountId = accountsCursor.getInt(accountsCursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN));
 		new DownloadAuthRequest().execute(accountId);
 	}
+	
+	private class SendResponse extends AsyncTask<String, String, Boolean>
+	{
+		private DialogInterface.OnCancelListener _cancelListener = new DialogInterface.OnCancelListener() {
 
-	private class DownloadAuthRequest extends AsyncTask<Integer, String, String>
+			public void onCancel(DialogInterface dialog) {
+				// TODO Set to false if there is a reliable way to cancel inside doInBackground
+				SendResponse.this.cancel(true);
+			}
+		};
+		private ProgressDialog dialog;
+		private String error = null;
+		
+		@Override
+		protected void onCancelled()
+		{
+			dialog.dismiss();
+			if(error != null)
+				showAlertDialog(error);
+			else
+				Toast.makeText(PushAuthenticatorActivity.this, "Y U NO WAIT?", Toast.LENGTH_SHORT).show();
+		}
+
+		protected void onPreExecute()
+		{
+			dialog = ProgressDialog.show(PushAuthenticatorActivity.this, "", "Loading..", true, true);
+			dialog.setOnCancelListener(_cancelListener);
+		}
+		
+		@Override
+		protected Boolean doInBackground(String... params) {
+			String challenge = params[0];
+			String url = params[2];
+			String secret = params[3];
+			publishProgress("Calculating response.");
+			String response = getResponse(secret, challenge);
+			if(this.isCancelled())
+				return false;
+			publishProgress("Sending response to server.");
+			url = Uri.parse(url).buildUpon().appendQueryParameter("challenge", challenge).appendQueryParameter("response", response).build().toString();
+			HttpGet request = new HttpGet(url);
+			AndroidHttpClient client = AndroidHttpClient.newInstance("PushAuthenticator", PushAuthenticatorActivity.this);
+			String httpResponse;
+			try {
+				BufferedReader rd = new BufferedReader(new InputStreamReader(client.execute(request).getEntity().getContent()));
+				httpResponse = rd.readLine();
+				rd.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
+				cancel(false);
+				return false;
+			}
+			client.close();
+			return httpResponse.equals("1");
+		}
+		
+		private String getResponse(String secret, String challenge) {
+			String response = null;
+			try {
+				String key = OCRA.getHexString(Base32String.decode(secret));
+				String hexChallenge = Integer.toHexString(Integer.parseInt(challenge));
+				response = OCRA.generateOCRA("OCRA-1:HOTP-SHA1-6:QN06", key, "", hexChallenge, "", "", "");
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
+				cancel(false);
+			}
+			return response;
+		}
+		
+		protected void onProgressUpdate(String... progress)
+		{
+			dialog.setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
+		}
+
+		protected void onPostExecute(Boolean result)
+		{
+			dialog.dismiss();
+			Toast.makeText(PushAuthenticatorActivity.this, result ? "Login successful." : "Login unsuccessful", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private class DownloadAuthRequest extends AsyncTask<Integer, String, String[]>
 	{
 		private DialogInterface.OnCancelListener _cancelListener = new DialogInterface.OnCancelListener() {
 
@@ -139,7 +224,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 		}
 
 		@Override
-		protected String doInBackground(Integer... params) {
+		protected String[] doInBackground(Integer... params) {
 			publishProgress("Contacting server.");
 			String url = AccountsDbAdapter.getURL(params[0]);
 			String user = AccountsDbAdapter.getUser(params[0]);
@@ -148,52 +233,24 @@ public class PushAuthenticatorActivity extends ListActivity {
 			url = Uri.parse(url).buildUpon().appendQueryParameter("user", user).build().toString();
 			HttpGet request = new HttpGet(url);
 			String httpResponse;
+			String challenge;
+			String verification;
 			try {
 				BufferedReader rd = new BufferedReader(new InputStreamReader(client.execute(request).getEntity().getContent()));
 				httpResponse = rd.readLine();
 				rd.close();
+				client.close();
+				Log.d("HTTP", httpResponse);
+				JSONObject jsonResponse = new JSONObject(httpResponse);
+				challenge = jsonResponse.getString("challenge");
+				verification = jsonResponse.getString("verification");
 			} catch (Exception e) {
 				e.printStackTrace();
 				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
 				cancel(false);
 				return null;
 			}
-			publishProgress("Calculating response.");
-			String response = getResponse(secret, httpResponse);
-			if(this.isCancelled())
-				return null;
-			publishProgress("Sending response to server.");
-			Log.d("Challenge", httpResponse);
-			Log.d("Response", response);
-			url = Uri.parse(url).buildUpon().appendQueryParameter("challenge", httpResponse).appendQueryParameter("response", response).build().toString();
-			request = new HttpGet(url);
-			try {
-				BufferedReader rd = new BufferedReader(new InputStreamReader(client.execute(request).getEntity().getContent()));
-				httpResponse = rd.readLine();
-				rd.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
-				cancel(false);
-				return null;
-			}
-			client.close();
-			return httpResponse;
-		}
-		
-		private String getResponse(String secret, String challenge) {
-			String response = null;
-			try {
-				String key = OCRA.getHexString(Base32String.decode(secret));
-				String hexChallenge = Integer.toHexString(Integer.parseInt(challenge));
-				response = OCRA.generateOCRA("OCRA-1:HOTP-SHA1-6:QN06", key, "", hexChallenge, "", "", "");
-			} catch (Exception e)
-			{
-				e.printStackTrace();
-				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
-				cancel(false);
-			}
-			return response;
+			return new String[] {challenge, verification, url, secret};
 		}
 
 		protected void onProgressUpdate(String... progress)
@@ -201,10 +258,21 @@ public class PushAuthenticatorActivity extends ListActivity {
 			dialog.setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
 		}
 
-		protected void onPostExecute(String result)
+		protected void onPostExecute(final String[] result)
 		{
 			dialog.dismiss();
-			Toast.makeText(PushAuthenticatorActivity.this, result, Toast.LENGTH_SHORT).show();
+			new AlertDialog
+				.Builder(PushAuthenticatorActivity.this)
+				.setTitle("Authentication request")
+				.setMessage("Verification: "+result[1])
+				.setCancelable(false)
+				.setPositiveButton("Approve", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						new SendResponse().execute(result);
+					}
+				})
+				.setNegativeButton("Deny", null)
+				.show();
 		}
 	}
 	
