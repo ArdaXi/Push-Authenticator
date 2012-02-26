@@ -2,25 +2,18 @@ package com.ardaxi.authenticator;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
 import java.text.MessageFormat;
 import java.util.Locale;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.params.HttpParams;
-import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.ardaxi.authenticator.OCRA;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -34,7 +27,9 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
@@ -80,6 +75,9 @@ public class PushAuthenticatorActivity extends ListActivity {
 		{
 		case R.id.menu_delete:
 			deleteItem((int) info.id);
+			return true;
+		case R.id.menu_rename:
+			renameItem((int) info.id);
 			return true;
 		default:
 			return super.onContextItemSelected(item);
@@ -399,6 +397,28 @@ public class PushAuthenticatorActivity extends ListActivity {
 		})
 		.setNegativeButton(R.string.no, null)
 		.show();
+	}
+	
+	private void renameItem(final Integer id)
+	{
+		final String name = AccountsDbAdapter.getName(id);
+		final View frame = getLayoutInflater().inflate(R.layout.rename,
+				(ViewGroup) findViewById(R.id.rename_root));
+		final EditText nameEdit = (EditText) frame.findViewById(R.id.rename_edittext);
+        nameEdit.setText(name);
+		new AlertDialog.Builder(this)
+		.setTitle(String.format(getString(R.string.rename_message), name))
+		.setView(frame)
+		.setPositiveButton(R.string.submit,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						String newName = nameEdit.getText().toString();
+						AccountsDbAdapter.renameAccount(name, newName);
+						refresh();
+					}
+				})
+				.setNegativeButton(R.string.cancel, null)
+				.show();
 	}
 	
 	private void showDownloadDialogZxing() {
