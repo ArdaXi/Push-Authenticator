@@ -240,6 +240,12 @@ public class PushAuthenticatorActivity extends ListActivity {
 				client.close();
 				Log.d("HTTP", httpResponse);
 				JSONObject jsonResponse = new JSONObject(httpResponse);
+				if(!jsonResponse.getBoolean("request"))
+				{
+					error = "No request.";
+					cancel(false);
+					return null;
+				}
 				challenge = jsonResponse.getString("challenge");
 				verification = jsonResponse.getString("verification");
 			} catch (Exception e) {
