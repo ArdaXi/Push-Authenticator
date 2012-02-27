@@ -13,14 +13,15 @@ public class AccountsDbAdapter {
 	static final String NAME_COLUMN = "name";
 	static final String USER_COLUMN = "user";
 	static final String URL_COLUMN = "url";
-	static final String SECRET_COLUMN = "secret";
+	static final String CLIENT_SECRET_COLUMN = "client_secret";
+	static final String SERVER_SECRET_COLUMN = "server_secret";
 	private static final String PATH = "databases";
 	private static SQLiteDatabase DATABASE = null;
 	private static final String DATABASE_CREATE = String.format(
 			"CREATE TABLE IF NOT EXISTS %s" +
-					" (%s INTEGER PRIMARY KEY, %s TEXT NOT NULL, %s TEXT NOT NULL, %s TEXT NOT NULL," +
+					" (%s INTEGER PRIMARY KEY, %s TEXT NOT NULL, %s TEXT NOT NULL, %s TEXT NOT NULL, %s TEXT NOT NULL," +
 					" %s INTEGER DEFAULT %s)",
-					TABLE_NAME, ID_COLUMN, NAME_COLUMN, USER_COLUMN, URL_COLUMN, SECRET_COLUMN, 
+					TABLE_NAME, ID_COLUMN, NAME_COLUMN, USER_COLUMN, URL_COLUMN, CLIENT_SECRET_COLUMN, SERVER_SECRET_COLUMN, 
 					DEFAULT_COUNTER);
 	
 	private AccountsDbAdapter()
@@ -88,22 +89,28 @@ public class AccountsDbAdapter {
 		return getColumn(id, USER_COLUMN);
 	}
 	
-	static String getSecret(int id) {
-		return getColumn(id, SECRET_COLUMN);
+	static String getClientSecret(int id) {
+		return getColumn(id, CLIENT_SECRET_COLUMN);
+	}
+	
+	static String getServerSecret(int id) {
+		return getColumn(id, SERVER_SECRET_COLUMN);
 	}
 	
 	/**
 	 * Save key to database, creating a new user entry.
 	 * @param name the entry name.
-	 * @param secret the secret key.
+	 * @param clientSecret the client secret key.
+	 * @param serverSecret the server secret key.
 	 * @param url the url.
 	 */
-	static void addAccount(String name, String user, String secret, String url)
+	static void addAccount(String name, String user, String clientSecret, String serverSecret, String url)
 	{
 		ContentValues values = new ContentValues();
 		values.put(NAME_COLUMN, name);
 		values.put(USER_COLUMN, user);
-		values.put(SECRET_COLUMN, secret);
+		values.put(CLIENT_SECRET_COLUMN, clientSecret);
+		values.put(SERVER_SECRET_COLUMN, serverSecret);
 		values.put(URL_COLUMN, url);
 		DATABASE.insert(TABLE_NAME, null, values);
 	}

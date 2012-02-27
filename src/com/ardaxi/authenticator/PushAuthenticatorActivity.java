@@ -13,7 +13,6 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -56,9 +55,18 @@ public class PushAuthenticatorActivity extends ListActivity {
 		AccountsDbAdapter.initialize(this);
 		accountsCursor = AccountsDbAdapter.getNames();
 		startManagingCursor(accountsCursor);
-		setListAdapter(new SimpleCursorAdapter(this, R.layout.list_item, accountsCursor, new String[] { AccountsDbAdapter.NAME_COLUMN }, new int[] { R.id.text1 }));
+		setListAdapter(new SimpleCursorAdapter(this, android.R.layout.simple_list_item_2, accountsCursor, new String[] { AccountsDbAdapter.NAME_COLUMN }, new int[] { android.R.id.text1 }));
 		registerForContextMenu(getListView());
 	}
+	
+	  protected void onResume() {
+		    super.onResume();
+		    Uri uri = getIntent().getData();
+		    if (uri != null) {
+		      parseKey(uri);
+		      setIntent(new Intent());
+		    }
+	  }
 	
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo)
@@ -226,7 +234,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			publishProgress("Contacting server.");
 			String url = AccountsDbAdapter.getURL(params[0]);
 			String user = AccountsDbAdapter.getUser(params[0]);
-			String secret = AccountsDbAdapter.getSecret(params[0]);
+			String clientSecret = AccountsDbAdapter.getClientSecret(params[0]);
 			AndroidHttpClient client = AndroidHttpClient.newInstance("PushAuthenticator", PushAuthenticatorActivity.this);
 			url = Uri.parse(url).buildUpon().appendQueryParameter("user", user).build().toString();
 			HttpGet request = new HttpGet(url);
@@ -254,7 +262,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 				cancel(false);
 				return null;
 			}
-			return new String[] {challenge, verification, url, secret};
+			return new String[] {challenge, verification, url, clientSecret};
 		}
 
 		protected void onProgressUpdate(String... progress)
@@ -294,7 +302,8 @@ public class PushAuthenticatorActivity extends ListActivity {
 		String scheme = uri.getScheme().toLowerCase(Locale.US);
 		String path = uri.getPath();
 		String user = uri.getQueryParameter("user");
-		String secret = uri.getQueryParameter("secret");
+		String clientSecret = uri.getQueryParameter("client_secret");
+		String serverSecret = uri.getQueryParameter("server_secret");
 		Uri url = null;
 		try
 		{
@@ -315,7 +324,8 @@ public class PushAuthenticatorActivity extends ListActivity {
 		valid = valid && uri.getAuthority().equals("cotp")
 				&& path.length() > 2
 				&& user != null && user.length() > 0
-				&& secret != null && secret.length() > 0
+				&& clientSecret != null && clientSecret.length() > 0
+				&& serverSecret != null && serverSecret.length() > 0
 				&& url.isAbsolute()
 				&& url.getScheme().substring(0, 4).equals("http");
 		if(!valid)
@@ -323,7 +333,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		AccountsDbAdapter.addAccount(path.substring(1), user, secret, url.toString());
+		AccountsDbAdapter.addAccount(path.substring(1), user, clientSecret, serverSecret, url.toString());
 		refresh();
 		Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
 	}
