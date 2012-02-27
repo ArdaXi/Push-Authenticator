@@ -10,7 +10,7 @@
     <string name="install_button">Install</string>
     <string name="cancel">Cancel</string>
     <string name="otp_dialog_message">This code is not supported by Push Authenticator. To use it, you need Google Authenticator. Go there now?</string>
-    <string name="invalid_code_dialog_message">The code you scanned appears to be invalid. Please verify that it is a Push OTP code and try again.</string>
+    <string name="invalid_code_dialog_message">The code you scanned appears to be invalid. Please verify that it is a Push OCRA code and try again.</string>
     <string name="account_added">Account added</string>
     <string name="delete">Delete</string>
     <string name="yes">Yes</string>
@@ -22,5 +22,6 @@
     <string name="rename">Rename</string>
     <string name="rename_message">Rename %1$s</string>
     <string name="submit">Submit</string>
+    <string name="no_connection_message">Cannot connect to Internet. Please check your connection settings and try again.</string>
 
 </resources>
