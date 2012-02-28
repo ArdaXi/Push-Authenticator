@@ -175,10 +175,9 @@ public class PushAuthenticatorActivity extends ListActivity {
 					cancel(false);
 					return null;
 				}
-				String key = OCRA.getHexString(Base32String.decode(serverSecret));
 				String serverResponse = jsonResponse.getString("response");
 				String hexChallenge = Integer.toHexString(Integer.parseInt(clientChallenge));
-				String ocra = OCRA.generateOCRA(OCRA_SUITE, key, "", hexChallenge, "", "", "");
+				String ocra = OCRA.generateOCRA(OCRA_SUITE, serverSecret, "", hexChallenge, "", "", "");
 				if(!serverResponse.equals(ocra))
 				{
 					error = "Server response invalid.";
@@ -278,9 +277,8 @@ public class PushAuthenticatorActivity extends ListActivity {
 		private String getResponse(String secret, String challenge) {
 			String response = null;
 			try {
-				String key = OCRA.getHexString(Base32String.decode(secret));
 				String hexChallenge = Integer.toHexString(Integer.parseInt(challenge));
-				response = OCRA.generateOCRA(OCRA_SUITE, key, "", hexChallenge, "", "", "");
+				response = OCRA.generateOCRA(OCRA_SUITE, secret, "", hexChallenge, "", "", "");
 			} catch (Exception e)
 			{
 				e.printStackTrace();
@@ -328,7 +326,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 		{
 			valid = false;
 		}
-		if(!scheme.equals("potpauth"))
+		if(!scheme.equals("ocra"))
 		{
 			if(scheme.equals("otpauth"))
 				showDownloadDialogOTP();
@@ -336,7 +334,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 				showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		valid = valid && uri.getAuthority().equals("cotp")
+		valid = valid && uri.getAuthority().equals("sha1")
 				&& path.length() > 2
 				&& user != null && user.length() > 0
 				&& clientSecret != null && clientSecret.length() > 0
@@ -348,9 +346,10 @@ public class PushAuthenticatorActivity extends ListActivity {
 			showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		AccountsDbAdapter.addAccount(path.substring(1), user, clientSecret, serverSecret, url.toString());
-		refresh();
+		int accountId = AccountsDbAdapter.addAccount(path.substring(1), user, clientSecret, serverSecret, url.toString());
+		accountsCursor.requery();
 		Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
+		new DownloadAuthRequest().execute(accountId);
 	}
 
 	private void showDownloadDialogOTP() {
@@ -423,7 +422,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 		.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				AccountsDbAdapter.deleteAccount(id);
-				refresh();
+				accountsCursor.requery();
 			}
 		})
 		.setNegativeButton(R.string.no, null)
@@ -445,7 +444,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 					public void onClick(DialogInterface dialog, int which) {
 						String newName = nameEdit.getText().toString();
 						AccountsDbAdapter.renameAccount(name, newName);
-						refresh();
+						accountsCursor.requery();
 					}
 				})
 				.setNegativeButton(R.string.cancel, null)
@@ -472,12 +471,5 @@ public class PushAuthenticatorActivity extends ListActivity {
 		})
 		.setNegativeButton(R.string.cancel, null)
 		.show();
-	}
-	
-	private void refresh()
-	{
-		Intent intent = getIntent();
-		finish();
-		startActivity(intent);
 	}
 }

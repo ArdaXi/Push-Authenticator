@@ -104,7 +104,7 @@ public class AccountsDbAdapter {
 	 * @param serverSecret the server secret key.
 	 * @param url the url.
 	 */
-	static void addAccount(String name, String user, String clientSecret, String serverSecret, String url)
+	static int addAccount(String name, String user, String clientSecret, String serverSecret, String url)
 	{
 		ContentValues values = new ContentValues();
 		values.put(NAME_COLUMN, name);
@@ -112,7 +112,7 @@ public class AccountsDbAdapter {
 		values.put(CLIENT_SECRET_COLUMN, clientSecret);
 		values.put(SERVER_SECRET_COLUMN, serverSecret);
 		values.put(URL_COLUMN, url);
-		DATABASE.insert(TABLE_NAME, null, values);
+		return (int) DATABASE.insert(TABLE_NAME, null, values);
 	}
 	
 	/**
