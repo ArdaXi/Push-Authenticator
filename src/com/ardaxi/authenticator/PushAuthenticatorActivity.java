@@ -162,6 +162,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			String httpResponse;
 			String serverChallenge;
 			String verification;
+			String details = null;
 			try {
 				BufferedReader rd = new BufferedReader(new InputStreamReader(client.execute(request).getEntity().getContent()));
 				httpResponse = rd.readLine();
@@ -186,13 +187,14 @@ public class PushAuthenticatorActivity extends ListActivity {
 				}
 				serverChallenge = jsonResponse.getString("challenge");
 				verification = jsonResponse.getString("verification");
+				if(jsonResponse.has("details")) details = jsonResponse.getString("details");
 			} catch (Exception e) {
 				e.printStackTrace();
 				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
 				cancel(false);
 				return null;
 			}
-			return new String[] {serverChallenge, verification, url, clientSecret};
+			return new String[] {serverChallenge, verification, url, clientSecret, details};
 		}
 
 		protected void onProgressUpdate(String... progress)
@@ -203,7 +205,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 		protected void onPostExecute(final String[] result)
 		{
 			dialog.dismiss();
-			new AlertDialog
+			final AlertDialog.Builder builder = new AlertDialog
 				.Builder(PushAuthenticatorActivity.this)
 				.setTitle("Authentication request")
 				.setMessage("Verification: "+result[1])
@@ -213,8 +215,24 @@ public class PushAuthenticatorActivity extends ListActivity {
 						new SendResponse().execute(result);
 					}
 				})
-				.setNegativeButton("Deny", null)
-				.show();
+				.setNegativeButton("Deny", null);
+			if(result[4] != null)
+				builder.setNeutralButton("Details", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						new AlertDialog
+							.Builder(PushAuthenticatorActivity.this)
+							.setTitle("Authentication request")
+							.setMessage(result[4])
+							.setCancelable(false)
+							.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int which) {
+									builder.show();
+								}
+							})
+							.show();
+					}
+				});
+			builder.show();
 		}
 	}
 	
