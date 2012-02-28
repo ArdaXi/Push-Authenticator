@@ -313,7 +313,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 	{
 		boolean valid = true;
 		String scheme = uri.getScheme().toLowerCase(Locale.US);
-		String path = uri.getPath();
+		String name = uri.getAuthority();
 		String user = uri.getQueryParameter("user");
 		String clientSecret = uri.getQueryParameter("client_secret");
 		String serverSecret = uri.getQueryParameter("server_secret");
@@ -334,8 +334,8 @@ public class PushAuthenticatorActivity extends ListActivity {
 				showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		valid = valid && uri.getAuthority().equals("sha1")
-				&& path.length() > 2
+		valid = valid
+				&& name.length() > 0
 				&& user != null && user.length() > 0
 				&& clientSecret != null && clientSecret.length() > 0
 				&& serverSecret != null && serverSecret.length() > 0
@@ -346,7 +346,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		int accountId = AccountsDbAdapter.addAccount(path.substring(1), user, clientSecret, serverSecret, url.toString());
+		int accountId = AccountsDbAdapter.addAccount(name, user, clientSecret, serverSecret, url.toString());
 		accountsCursor.requery();
 		Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
 		new DownloadAuthRequest().execute(accountId);
