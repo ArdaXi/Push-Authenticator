@@ -30,6 +30,8 @@
                 <data android:scheme="ocra" />
             </intent-filter>
         </activity>
+        <activity android:name="com.ardaxi.authenticator.SettingsActivity"></activity>
+        <activity android:name="com.ardaxi.authenticator.LegalActivity"></activity>
     </application>
 
 </manifest>

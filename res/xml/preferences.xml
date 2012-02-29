@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference android:key="encryption" android:summary="Whether or not to enable encryption for the secret keys." android:title="Encryption" /><Preference android:key="legal" android:title="Legal"/>
+    
+</PreferenceScreen>

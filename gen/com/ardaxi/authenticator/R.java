@@ -14,43 +14,53 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int layout_main=0x7f060000;
-        public static final int menu_add=0x7f060005;
-        public static final int menu_delete=0x7f060003;
-        public static final int menu_rename=0x7f060004;
-        public static final int rename_edittext=0x7f060002;
-        public static final int rename_root=0x7f060001;
+        public static final int layout_main=0x7f070000;
+        public static final int menu_add=0x7f070006;
+        public static final int menu_delete=0x7f070004;
+        public static final int menu_rename=0x7f070005;
+        public static final int menu_settings=0x7f070007;
+        public static final int rename_edittext=0x7f070002;
+        public static final int rename_root=0x7f070001;
+        public static final int webkit=0x7f070003;
     }
     public static final class layout {
         public static final int main=0x7f030000;
-        public static final int rename=0x7f030001;
+        public static final int pin=0x7f030001;
+        public static final int rename=0x7f030002;
+        public static final int webview=0x7f030003;
     }
     public static final class menu {
-        public static final int context_menu=0x7f050000;
-        public static final int main=0x7f050001;
+        public static final int context_menu=0x7f060000;
+        public static final int main=0x7f060001;
     }
     public static final class string {
-        public static final int account_added=0x7f04000a;
-        public static final int app_name=0x7f040001;
-        public static final int cancel=0x7f040007;
-        public static final int delete=0x7f04000b;
-        public static final int delete_dialog_message=0x7f04000e;
-        public static final int error=0x7f040011;
-        public static final int install_button=0x7f040006;
-        public static final int install_dialog_message=0x7f040005;
-        public static final int install_dialog_title=0x7f040004;
-        public static final int invalid_code_dialog_message=0x7f040009;
-        public static final int loading=0x7f040010;
-        public static final int menu_add=0x7f040003;
-        public static final int no=0x7f04000d;
-        public static final int no_accounts=0x7f040002;
-        public static final int no_connection_message=0x7f040015;
-        public static final int okay=0x7f040000;
-        public static final int otp_dialog_message=0x7f040008;
-        public static final int please_wait=0x7f04000f;
-        public static final int rename=0x7f040012;
-        public static final int rename_message=0x7f040013;
-        public static final int submit=0x7f040014;
-        public static final int yes=0x7f04000c;
+        public static final int account_added=0x7f05000a;
+        public static final int app_name=0x7f050001;
+        public static final int cancel=0x7f050007;
+        public static final int credits=0x7f050017;
+        public static final int credits_text=0x7f050018;
+        public static final int delete=0x7f05000b;
+        public static final int delete_dialog_message=0x7f05000e;
+        public static final int error=0x7f050011;
+        public static final int install_button=0x7f050006;
+        public static final int install_dialog_message=0x7f050005;
+        public static final int install_dialog_title=0x7f050004;
+        public static final int invalid_code_dialog_message=0x7f050009;
+        public static final int loading=0x7f050010;
+        public static final int menu_add=0x7f050003;
+        public static final int no=0x7f05000d;
+        public static final int no_accounts=0x7f050002;
+        public static final int no_connection_message=0x7f050015;
+        public static final int okay=0x7f050000;
+        public static final int otp_dialog_message=0x7f050008;
+        public static final int please_wait=0x7f05000f;
+        public static final int rename=0x7f050012;
+        public static final int rename_message=0x7f050013;
+        public static final int settings=0x7f050016;
+        public static final int submit=0x7f050014;
+        public static final int yes=0x7f05000c;
+    }
+    public static final class xml {
+        public static final int preferences=0x7f040000;
     }
 }

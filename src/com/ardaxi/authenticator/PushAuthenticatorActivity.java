@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -33,6 +34,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
+import android.content.SharedPreferences.Editor;
 
 public class PushAuthenticatorActivity extends ListActivity {
 
@@ -48,6 +50,8 @@ public class PushAuthenticatorActivity extends ListActivity {
 	private static final String OCRA_SUITE = "OCRA-1:HOTP-SHA1-6:QN06";
 	
 	private Cursor accountsCursor;
+	
+	private boolean enableEncryption;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -68,6 +72,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			parseKey(uri);
 			setIntent(new Intent());
 		}
+		enableEncryption = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("encryption", false);
 	}
 	
 	@Override
@@ -106,6 +111,9 @@ public class PushAuthenticatorActivity extends ListActivity {
 		switch (item.getItemId()) {
 		case R.id.menu_add:
 			addItem();
+			return true;
+		case R.id.menu_settings:
+			startActivity(new Intent(this, SettingsActivity.class));
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -370,6 +378,9 @@ public class PushAuthenticatorActivity extends ListActivity {
 		new DownloadAuthRequest().execute(accountId);
 	}
 
+	/**
+	 * @author © Google 2009
+	 */
 	private void showDownloadDialogOTP() {
 		new AlertDialog
 			.Builder(this)
@@ -469,6 +480,9 @@ public class PushAuthenticatorActivity extends ListActivity {
 				.show();
 	}
 	
+	/**
+	 * @author © Google 2009
+	 */
 	private void showDownloadDialogZxing() {
 		new AlertDialog.Builder(this)
 		.setTitle(R.string.install_dialog_title)
