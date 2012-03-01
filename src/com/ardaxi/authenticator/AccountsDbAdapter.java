@@ -47,6 +47,11 @@ public class AccountsDbAdapter {
 		return DATABASE.query(TABLE_NAME, new String[] {ID_COLUMN, NAME_COLUMN}, null, null, null, null, null, null);
 	}
 	
+	static Cursor getSecrets()
+	{
+		return DATABASE.query(TABLE_NAME, new String[] {ID_COLUMN, CLIENT_SECRET_COLUMN, SERVER_SECRET_COLUMN}, null, null, null, null, null, null);
+	}
+	
 	static Cursor getAccount(Integer id)
 	{
 		return DATABASE.query(TABLE_NAME, null, ID_COLUMN + "= ?",
@@ -113,6 +118,16 @@ public class AccountsDbAdapter {
 		values.put(SERVER_SECRET_COLUMN, serverSecret);
 		values.put(URL_COLUMN, url);
 		return (int) DATABASE.insert(TABLE_NAME, null, values);
+	}
+	
+	static void updateSecrets(Integer id, String clientSecret, String serverSecret)
+	{
+		ContentValues values = new ContentValues();
+		values.put(CLIENT_SECRET_COLUMN, clientSecret);
+		values.put(SERVER_SECRET_COLUMN, serverSecret);
+		DATABASE.update(TABLE_NAME, values, 
+				ID_COLUMN + "= ?",
+		        new String[] {id.toString()});
 	}
 	
 	/**
