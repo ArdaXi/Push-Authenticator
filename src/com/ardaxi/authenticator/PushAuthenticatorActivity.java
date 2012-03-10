@@ -49,7 +49,6 @@ public class PushAuthenticatorActivity extends ListActivity {
 	private static final String OCRA_SUITE = "OCRA-1:HOTP-SHA1-6:QN06";
 	
 	private Cursor accountsCursor;
-	
 	private boolean enableEncryption;
 
 	/** Called when the activity is first created. */
@@ -138,11 +137,21 @@ public class PushAuthenticatorActivity extends ListActivity {
 		};
 		private ProgressDialog dialog;
 		private String error = null;
+		
+		private ProgressDialog getDialog()
+		{
+			if(dialog == null)
+			{
+				dialog = ProgressDialog.show(PushAuthenticatorActivity.this, "", "Loading..", true, true);
+				dialog.setOnCancelListener(_cancelListener);
+			}
+			return dialog;
+		}
 
 		@Override
 		protected void onCancelled()
 		{
-			dialog.dismiss();
+			getDialog().dismiss();
 			if(error != null)
 				showAlertDialog(error);
 			else
@@ -151,8 +160,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 
 		protected void onPreExecute()
 		{
-			dialog = ProgressDialog.show(PushAuthenticatorActivity.this, "", "Loading..", true, true);
-			dialog.setOnCancelListener(_cancelListener);
+			getDialog();
 		}
 
 		@Override
@@ -163,7 +171,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			String clientSecret = AccountsDbAdapter.getClientSecret(params[0]);
 			String serverSecret = AccountsDbAdapter.getServerSecret(params[0]);
 			String clientChallenge = Integer.toString(new SecureRandom().nextInt(899999) + 100000);
-			AndroidHttpClient client = AndroidHttpClient.newInstance("PushAuthenticator", PushAuthenticatorActivity.this);
+			AndroidHttpClient client = AndroidHttpClient.newInstance("PushAuthenticator", getApplication());
 			url = Uri.parse(url).buildUpon().appendQueryParameter("user", user).appendQueryParameter("client_challenge", clientChallenge).build().toString();
 			HttpGet request = new HttpGet(url);
 			String httpResponse;
@@ -206,12 +214,12 @@ public class PushAuthenticatorActivity extends ListActivity {
 
 		protected void onProgressUpdate(String... progress)
 		{
-			dialog.setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
+			getDialog().setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
 		}
 
 		protected void onPostExecute(final String[] result)
 		{
-			dialog.dismiss();
+			getDialog().dismiss();
 			final AlertDialog.Builder builder = new AlertDialog
 				.Builder(PushAuthenticatorActivity.this)
 				.setTitle("Authentication request")
@@ -255,10 +263,20 @@ public class PushAuthenticatorActivity extends ListActivity {
 		private ProgressDialog dialog;
 		private String error = null;
 		
+		private ProgressDialog getDialog()
+		{
+			if(dialog == null)
+			{
+				dialog = ProgressDialog.show(PushAuthenticatorActivity.this, "", "Loading..", true, true);
+				dialog.setOnCancelListener(_cancelListener);
+			}
+			return dialog;
+		}
+		
 		@Override
 		protected void onCancelled()
 		{
-			dialog.dismiss();
+			getDialog().dismiss();
 			if(error != null)
 				showAlertDialog(error);
 			else
@@ -267,8 +285,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 
 		protected void onPreExecute()
 		{
-			dialog = ProgressDialog.show(PushAuthenticatorActivity.this, "", "Loading..", true, true);
-			dialog.setOnCancelListener(_cancelListener);
+			getDialog();
 		}
 		
 		@Override
@@ -315,12 +332,12 @@ public class PushAuthenticatorActivity extends ListActivity {
 		
 		protected void onProgressUpdate(String... progress)
 		{
-			dialog.setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
+			getDialog().setMessage(MessageFormat.format("{0} {1}", progress[0], PushAuthenticatorActivity.this.getResources().getString(R.string.please_wait)));
 		}
 
 		protected void onPostExecute(Boolean result)
 		{
-			dialog.dismiss();
+			getDialog().dismiss();
 			Toast.makeText(PushAuthenticatorActivity.this, result ? "Login successful." : "Login unsuccessful", Toast.LENGTH_SHORT).show();
 		}
 	}
