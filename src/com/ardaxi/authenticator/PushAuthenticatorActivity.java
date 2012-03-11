@@ -49,7 +49,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 	private static final String OCRA_SUITE = "OCRA-1:HOTP-SHA1-6:QN06";
 	
 	private Cursor accountsCursor;
-	private boolean enableEncryption;
+	private boolean encryption;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -70,7 +70,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			parseKey(uri);
 			setIntent(new Intent());
 		}
-		enableEncryption = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("encryption", false);
+		encryption = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("encryption", false);
 	}
 	
 	@Override
@@ -122,11 +122,29 @@ public class PushAuthenticatorActivity extends ListActivity {
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 		accountsCursor.moveToPosition(position);
-		int accountId = accountsCursor.getInt(accountsCursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN));
-		new DownloadAuthRequest().execute(accountId);
+		final String accountId = Integer.toString(accountsCursor.getInt(accountsCursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN)));
+		if(!encryption)
+		{
+			new DownloadAuthRequest().execute(accountId);
+			return;
+		}
+		final View frame = getLayoutInflater().inflate(R.layout.pin,
+				(ViewGroup) findViewById(R.id.pin_root));
+		final EditText nameEdit = (EditText) frame.findViewById(R.id.pin_edittext);
+		new AlertDialog.Builder(this)
+		.setView(frame)
+		.setTitle("Enter PIN")
+		.setPositiveButton(R.string.okay,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						new DownloadAuthRequest().execute(accountId, nameEdit.getText().toString());
+					}
+				})
+				.setNegativeButton(R.string.cancel, null)
+				.show();
 	}
 	
-	private class DownloadAuthRequest extends AsyncTask<Integer, String, String[]>
+	private class DownloadAuthRequest extends AsyncTask<String, String, String[]>
 	{
 		private DialogInterface.OnCancelListener _cancelListener = new DialogInterface.OnCancelListener() {
 
@@ -164,12 +182,22 @@ public class PushAuthenticatorActivity extends ListActivity {
 		}
 
 		@Override
-		protected String[] doInBackground(Integer... params) {
+		protected String[] doInBackground(String... params) {
+			int columnId = Integer.parseInt(params[0]);
+			String url = AccountsDbAdapter.getURL(columnId);
+			String user = AccountsDbAdapter.getUser(columnId);
+			String clientSecret = AccountsDbAdapter.getClientSecret(columnId);
+			String serverSecret = AccountsDbAdapter.getServerSecret(columnId);
+			if(params.length > 1)
+			{
+				publishProgress("Decrypting keys.");
+				CryptoHelper crypto = new CryptoHelper(PushAuthenticatorActivity.this, params[1].toCharArray());
+				params[1] = null;
+				clientSecret = crypto.decrypt(clientSecret);
+				serverSecret = crypto.decrypt(serverSecret);
+				crypto.close();
+			}
 			publishProgress("Contacting server.");
-			String url = AccountsDbAdapter.getURL(params[0]);
-			String user = AccountsDbAdapter.getUser(params[0]);
-			String clientSecret = AccountsDbAdapter.getClientSecret(params[0]);
-			String serverSecret = AccountsDbAdapter.getServerSecret(params[0]);
 			String clientChallenge = Integer.toString(new SecureRandom().nextInt(899999) + 100000);
 			AndroidHttpClient client = AndroidHttpClient.newInstance("PushAuthenticator", getApplication());
 			url = Uri.parse(url).buildUpon().appendQueryParameter("user", user).appendQueryParameter("client_challenge", clientChallenge).build().toString();
@@ -388,10 +416,11 @@ public class PushAuthenticatorActivity extends ListActivity {
 			showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
+		// TODO: Encrypt if necessary.
 		int accountId = AccountsDbAdapter.addAccount(name, user, clientSecret, serverSecret, url.toString());
 		accountsCursor.requery();
 		Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
-		new DownloadAuthRequest().execute(accountId);
+		new DownloadAuthRequest().execute(Integer.toString(accountId));
 	}
 
 	/**
