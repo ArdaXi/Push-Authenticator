@@ -24,4 +24,4 @@ The advantages of Push Authenticator over existing solutions like Google Authent
 
 Because I'm still figuring out what licencing to use, and this code is not for general use, for now I am maintaining full copyright on it. This **will** change in the future.
 
-    � Ari�n Holthuizen 2012
+    © Ariën Holthuizen 2012
