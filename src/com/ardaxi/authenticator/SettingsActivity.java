@@ -36,6 +36,11 @@ public class SettingsActivity extends PreferenceActivity {
 				return NOVALUE;
 			}
 		}
+		
+		public String toString()
+		{
+			return this.name().toLowerCase();
+		}
 	}
 
 	@Override
@@ -52,7 +57,6 @@ public class SettingsActivity extends PreferenceActivity {
 		{
 		case ENCRYPTION:
 			//TODO: Test for encryption
-			//TODO: Do this asynchronously
 			AccountsDbAdapter.initialize(this);
 			final View frame = getLayoutInflater().inflate(R.layout.pin,
 					(ViewGroup) findViewById(R.id.pin_root));
@@ -90,7 +94,7 @@ public class SettingsActivity extends PreferenceActivity {
 		return super.onPreferenceTreeClick(preferenceScreen, preference);
 	}
 	
-	private class Crypto extends AsyncTask<char[], String, Void>
+	private class Crypto extends AsyncTask<char[], String, Boolean>
 	{
 		private DialogInterface.OnCancelListener _cancelListener = new DialogInterface.OnCancelListener() {
 
@@ -127,7 +131,7 @@ public class SettingsActivity extends PreferenceActivity {
 		}
 		
 		@Override
-		protected Void doInBackground(char[]... arg0) {
+		protected Boolean doInBackground(char[]... arg0) {
 			boolean encrypt = arg0[0].toString().equals("encrypt");
 			publishProgress(encrypt ? "Encrypting." : "Decrypting.");
 			CryptoHelper crypto = new CryptoHelper(SettingsActivity.this, arg0[1]);
@@ -144,7 +148,8 @@ public class SettingsActivity extends PreferenceActivity {
 					AccountsDbAdapter.updateSecrets(id, crypto.decrypt(clientSecret), crypto.decrypt(serverSecret));
 			}
 			crypto.close();
-			return null;
+			sharedPreferences.edit().putBoolean(Setting.ENCRYPTION.toString(), encrypt).commit();
+			return encrypt;
 		}
 		
 		protected void onProgressUpdate(String... progress)
