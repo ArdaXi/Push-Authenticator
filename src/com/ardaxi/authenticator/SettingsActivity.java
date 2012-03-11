@@ -73,7 +73,8 @@ public class SettingsActivity extends PreferenceActivity {
 				public void onClick(DialogInterface dialog, int which) {
 					new Crypto().execute("encrypt".toCharArray(),nameEdit.getText().toString().toCharArray());
 				}
-			});
+			})
+			.setNegativeButton(R.string.cancel, null);
 			if(!sharedPreferences.getBoolean(Setting.ENCRYPTION.toString(), false)) // Only decrypt when encrypted.
 			{
 				dialogBuilder.show();

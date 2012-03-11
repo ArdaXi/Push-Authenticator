@@ -383,18 +383,19 @@ public class PushAuthenticatorActivity extends ListActivity {
 	{
 		boolean valid = true;
 		String scheme = uri.getScheme().toLowerCase(Locale.US);
-		String name = uri.getAuthority();
-		String user = uri.getQueryParameter("user");
-		String clientSecret = uri.getQueryParameter("client_secret");
-		String serverSecret = uri.getQueryParameter("server_secret");
-		Uri url = null;
+		final String name = uri.getAuthority();
+		final String user = uri.getQueryParameter("user");
+		final String clientSecret = uri.getQueryParameter("client_secret");
+		final String serverSecret = uri.getQueryParameter("server_secret");
+		final Uri url;
 		try
 		{
 			url = Uri.parse(uri.getQueryParameter("url"));
 		}
 		catch (Exception e)
 		{
-			valid = false;
+			showAlertDialog(R.string.invalid_code_dialog_message);
+			return;
 		}
 		if(!scheme.equals("ocra"))
 		{
@@ -416,11 +417,35 @@ public class PushAuthenticatorActivity extends ListActivity {
 			showAlertDialog(R.string.invalid_code_dialog_message);
 			return;
 		}
-		// TODO: Encrypt if necessary.
-		int accountId = AccountsDbAdapter.addAccount(name, user, clientSecret, serverSecret, url.toString());
-		accountsCursor.requery();
-		Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
-		new DownloadAuthRequest().execute(Integer.toString(accountId));
+		if(encryption)
+		{
+			final View frame = getLayoutInflater().inflate(R.layout.pin,
+					(ViewGroup) findViewById(R.id.pin_root));
+			final EditText nameEdit = (EditText) frame.findViewById(R.id.pin_edittext);
+			new AlertDialog.Builder(this)
+			.setView(frame)
+			.setTitle("Enter PIN")
+			.setPositiveButton(R.string.okay,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							CryptoHelper crypto = new CryptoHelper(PushAuthenticatorActivity.this, nameEdit.getText().toString().toCharArray());
+							int accountId = AccountsDbAdapter.addAccount(name, user, crypto.encrypt(clientSecret), crypto.encrypt(serverSecret), url.toString());
+							accountsCursor.requery();
+							Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
+							new DownloadAuthRequest().execute(Integer.toString(accountId), nameEdit.getText().toString());
+							crypto.close();
+						}
+					})
+					.setNegativeButton(R.string.cancel, null)
+					.show();
+		}
+		else
+		{
+			int accountId = AccountsDbAdapter.addAccount(name, user, clientSecret, serverSecret, url.toString());
+			accountsCursor.requery();
+			Toast.makeText(PushAuthenticatorActivity.this, R.string.account_added, Toast.LENGTH_SHORT).show();
+			new DownloadAuthRequest().execute(Integer.toString(accountId));
+		}
 	}
 
 	/**
