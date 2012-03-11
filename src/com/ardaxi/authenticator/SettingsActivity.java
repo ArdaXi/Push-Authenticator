@@ -142,7 +142,7 @@ public class SettingsActivity extends PreferenceActivity {
 		
 		@Override
 		protected Boolean doInBackground(char[]... arg0) {
-			boolean encrypt = arg0[0].toString().equals("encrypt");
+			boolean encrypt = arg0[0][0] == 'e';
 			publishProgress(encrypt ? "Encrypting." : "Decrypting.");
 			CryptoHelper crypto = new CryptoHelper(SettingsActivity.this, arg0[1]);
 			Cursor cursor = AccountsDbAdapter.getSecrets();
@@ -156,6 +156,7 @@ public class SettingsActivity extends PreferenceActivity {
 					AccountsDbAdapter.updateSecrets(id, crypto.encrypt(clientSecret), crypto.encrypt(serverSecret));
 				else
 					AccountsDbAdapter.updateSecrets(id, crypto.decrypt(clientSecret), crypto.decrypt(serverSecret));
+				cursor.moveToNext();
 			}
 			crypto.close();
 			return encrypt;

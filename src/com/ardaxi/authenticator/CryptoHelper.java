@@ -45,7 +45,7 @@ public class CryptoHelper {
 		SecretKeyFactory factory;
 		try {
 			factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-			KeySpec spec = new PBEKeySpec(password, getBytes("salt"), 65536, 256);
+			KeySpec spec = new PBEKeySpec(password, getBytes("salt"), 128, 128);
 			Arrays.fill(password, '\u0000');
 			password = null;
 			SecretKey key = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
