@@ -1,11 +1,15 @@
 package com.ardaxi.authenticator;
 
+import java.text.MessageFormat;
+
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -14,6 +18,7 @@ import android.preference.PreferenceScreen;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class SettingsActivity extends PreferenceActivity {
 	private SharedPreferences sharedPreferences;
@@ -57,17 +62,7 @@ public class SettingsActivity extends PreferenceActivity {
 			.setTitle("Enter new PIN")
 			.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-					CryptoHelper crypto = new CryptoHelper(SettingsActivity.this, nameEdit.getText().toString().toCharArray());
-					Cursor cursor = AccountsDbAdapter.getSecrets();
-					cursor.moveToFirst();
-					while(!cursor.isAfterLast())
-					{
-						String clientSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.CLIENT_SECRET_COLUMN));
-						String serverSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.SERVER_SECRET_COLUMN));
-						int id = cursor.getInt(cursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN));
-						AccountsDbAdapter.updateSecrets(id, crypto.encrypt(clientSecret), crypto.encrypt(serverSecret));
-					}
-					crypto.close();
+					new Crypto().execute("encrypt".toCharArray(),nameEdit.getText().toString().toCharArray());
 				}
 			});
 			new AlertDialog.Builder(this)
@@ -76,13 +71,13 @@ public class SettingsActivity extends PreferenceActivity {
 			.setPositiveButton("Change",
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
-							decrypt(nameEdit);
+							new Crypto().execute("decrypt".toCharArray(),nameEdit.getText().toString().toCharArray());
 							dialogBuilder.show();
 						}
 					})
 					.setNegativeButton("Disable", new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
-							decrypt(nameEdit);
+							new Crypto().execute("decrypt".toCharArray(),nameEdit.getText().toString().toCharArray());
 						}
 					})
 					.setNeutralButton("Cancel", null)
@@ -94,18 +89,84 @@ public class SettingsActivity extends PreferenceActivity {
 		}
 		return super.onPreferenceTreeClick(preferenceScreen, preference);
 	}
+	
+	private class Crypto extends AsyncTask<char[], String, Void>
+	{
+		private DialogInterface.OnCancelListener _cancelListener = new DialogInterface.OnCancelListener() {
 
-	private void decrypt(final EditText nameEdit) {
-		CryptoHelper crypto = new CryptoHelper(SettingsActivity.this, nameEdit.getText().toString().toCharArray());
-		Cursor cursor = AccountsDbAdapter.getSecrets();
-		cursor.moveToFirst();
-		while(!cursor.isAfterLast())
+			public void onCancel(DialogInterface dialog) {
+				Crypto.this.cancel(true);
+			}
+		};
+		private ProgressDialog dialog;
+		private String error = null;
+		
+		private ProgressDialog getDialog()
 		{
-			String clientSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.CLIENT_SECRET_COLUMN));
-			String serverSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.SERVER_SECRET_COLUMN));
-			int id = cursor.getInt(cursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN));
-			AccountsDbAdapter.updateSecrets(id, crypto.decrypt(clientSecret), crypto.decrypt(serverSecret));
+			if(dialog == null)
+			{
+				dialog = ProgressDialog.show(SettingsActivity.this, "", "Loading...", true, false);
+				dialog.setOnCancelListener(_cancelListener);
+			}
+			return dialog;
 		}
-		crypto.close();
+
+		@Override
+		protected void onCancelled()
+		{
+			getDialog().dismiss();
+			if(error != null)
+				showAlertDialog(error);
+			else
+				Toast.makeText(SettingsActivity.this, "Y U NO WAIT?", Toast.LENGTH_SHORT).show();
+		}
+
+		protected void onPreExecute()
+		{
+			getDialog();
+		}
+		
+		@Override
+		protected Void doInBackground(char[]... arg0) {
+			boolean encrypt = arg0[0].toString().equals("encrypt");
+			publishProgress(encrypt ? "Encrypting." : "Decrypting.");
+			CryptoHelper crypto = new CryptoHelper(SettingsActivity.this, arg0[1]);
+			Cursor cursor = AccountsDbAdapter.getSecrets();
+			cursor.moveToFirst();
+			while(!cursor.isAfterLast())
+			{
+				String clientSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.CLIENT_SECRET_COLUMN));
+				String serverSecret = cursor.getString(cursor.getColumnIndex(AccountsDbAdapter.SERVER_SECRET_COLUMN));
+				int id = cursor.getInt(cursor.getColumnIndex(AccountsDbAdapter.ID_COLUMN));
+				if(encrypt)
+					AccountsDbAdapter.updateSecrets(id, crypto.encrypt(clientSecret), crypto.encrypt(serverSecret));
+				else
+					AccountsDbAdapter.updateSecrets(id, crypto.decrypt(clientSecret), crypto.decrypt(serverSecret));
+			}
+			crypto.close();
+			return null;
+		}
+		
+		protected void onProgressUpdate(String... progress)
+		{
+			getDialog().setMessage(MessageFormat.format("{0} {1}", progress[0], SettingsActivity.this.getResources().getString(R.string.please_wait)));
+		}
+
+		protected void onPostExecute(Boolean result)
+		{
+			getDialog().dismiss();
+		}
+	}
+	
+	private void showAlertDialog(String message)
+	{
+		new AlertDialog
+		.Builder(this)
+		.setTitle(R.string.error)
+		.setMessage(message)
+		.setIcon(android.R.drawable.ic_dialog_alert)
+		.setCancelable(false)
+		.setNegativeButton(R.string.okay, null)
+		.show();
 	}
 }
