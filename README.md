@@ -25,3 +25,5 @@ The advantages of Push Authenticator over existing solutions like Google Authent
 Because I'm still figuring out what licencing to use, and this code is not for general use, for now I am maintaining full copyright on it. This **will** change in the future.
 
     © Ariën Holthuizen 2012
+    
+This project uses code from RFC 6287 and Google Authenticator. Appropriate notices can be found in [assets/legal.html](assets/legal.html).
