@@ -39,10 +39,12 @@ public final class R {
         public static final int account_added=0x7f05000a;
         public static final int app_name=0x7f050001;
         public static final int cancel=0x7f050007;
+        public static final int changepin=0x7f05001a;
         public static final int credits=0x7f050017;
         public static final int credits_text=0x7f050018;
         public static final int delete=0x7f05000b;
         public static final int delete_dialog_message=0x7f05000e;
+        public static final int enablepin=0x7f050019;
         public static final int error=0x7f050011;
         public static final int install_button=0x7f050006;
         public static final int install_dialog_message=0x7f050005;

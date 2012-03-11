@@ -48,6 +48,12 @@ public class SettingsActivity extends PreferenceActivity {
 		super.onCreate(savedInstanceState);
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		addPreferencesFromResource(R.xml.preferences);
+		refresh();
+	}
+	
+	private void refresh()
+	{
+		getPreferenceScreen().findPreference(Setting.ENCRYPTION.toString()).setSummary(sharedPreferences.getBoolean(Setting.ENCRYPTION.toString(), false) ? R.string.changepin : R.string.enablepin);
 	}
 
 	@Override
@@ -56,7 +62,6 @@ public class SettingsActivity extends PreferenceActivity {
 		switch(Setting.toSetting(preference.getKey()))
 		{
 		case ENCRYPTION:
-			//TODO: Test for encryption
 			AccountsDbAdapter.initialize(this);
 			final View frame = getLayoutInflater().inflate(R.layout.pin,
 					(ViewGroup) findViewById(R.id.pin_root));
@@ -69,6 +74,11 @@ public class SettingsActivity extends PreferenceActivity {
 					new Crypto().execute("encrypt".toCharArray(),nameEdit.getText().toString().toCharArray());
 				}
 			});
+			if(!sharedPreferences.getBoolean(Setting.ENCRYPTION.toString(), false)) // Only decrypt when encrypted.
+			{
+				dialogBuilder.show();
+				return true;
+			}
 			new AlertDialog.Builder(this)
 			.setView(frame)
 			.setTitle("Enter old PIN")
@@ -148,7 +158,6 @@ public class SettingsActivity extends PreferenceActivity {
 					AccountsDbAdapter.updateSecrets(id, crypto.decrypt(clientSecret), crypto.decrypt(serverSecret));
 			}
 			crypto.close();
-			sharedPreferences.edit().putBoolean(Setting.ENCRYPTION.toString(), encrypt).commit();
 			return encrypt;
 		}
 		
@@ -160,6 +169,8 @@ public class SettingsActivity extends PreferenceActivity {
 		protected void onPostExecute(Boolean result)
 		{
 			getDialog().dismiss();
+			sharedPreferences.edit().putBoolean(Setting.ENCRYPTION.toString(), result).commit();
+			refresh();
 		}
 	}
 	
