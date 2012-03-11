@@ -16,7 +16,7 @@ The advantages of Push Authenticator over existing solutions like Google Authent
 
 - Automation. Instead of manually entering keys back and forth, the client will negotiate the credentials over the internet if a connection is available.
 
-- Encryption. (WIP) Your secret keys are encrypted with a PIN, preventing mis-use if someone takes your phone.
+- Encryption. Your secret keys are encrypted with a PIN, preventing mis-use if someone takes your phone.
 
 - Key negotiation. (WIP) Rather than putting the key in a QR code on the user's computer, defeating the purpose of two-factor auth altogether, the keys are negotiated using Diffie-Hellman.
 
