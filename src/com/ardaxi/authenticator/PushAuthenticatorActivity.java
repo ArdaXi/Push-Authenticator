@@ -71,6 +71,7 @@ public class PushAuthenticatorActivity extends ListActivity {
 			setIntent(new Intent());
 		}
 		encryption = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("encryption", false);
+		accountsCursor.requery();
 	}
 	
 	@Override

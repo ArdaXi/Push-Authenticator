@@ -4,6 +4,6 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="lib" path="libs/android-support-v4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Arda Xi/workspace/Push Authenticator/bin/lib/scprov-jdk15-1.46.99.3-UNOFFICIAL-ROBERTO-RELEASE.jar" sourcepath="C:/Users/Arda Xi/.m2/repository/com/madgag/scprov-jdk15/1.46.99.3-UNOFFICIAL-ROBERTO-RELEASE/scprov-jdk15-1.46.99.3-UNOFFICIAL-ROBERTO-RELEASE-sources.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
